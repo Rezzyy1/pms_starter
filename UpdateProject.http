@@ -1,0 +1,19 @@
+@bearer_token=HIER_TOKEN_EINTRAGEN
+@project_id=1
+@employee_id=1
+@customer_id=1
+
+### Bestehendes Projekt ändern
+PUT http://localhost:8080/projects/{{project_id}}
+Authorization: Bearer {{bearer_token}}
+Content-Type: application/json
+
+{
+  "name": "Aktualisiertes Kundenportal",
+  "responsibleEmployeeId": {{employee_id}},
+  "customerId": {{customer_id}},
+  "customerContactName": "Anna Müller",
+  "comment": "Entwicklung eines neuen Kundenportals",
+  "startDate": "2026-11-01",
+  "endDate": "2026-12-15"
+}

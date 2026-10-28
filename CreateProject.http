@@ -1,0 +1,43 @@
+@employee_id=1
+
+### Mitarbeiter abrufen
+# @prompt bearer_token Access token aus GetBearerToken.http
+GET http://localhost:8089/employees
+Authorization: Bearer {{bearer_token}}
+
+### Projekt anlegen
+# @prompt bearer_token Access token aus GetBearerToken.http
+POST http://localhost:8080/projects
+Authorization: Bearer {{bearer_token}}
+Content-Type: application/json
+
+{
+  "name": "Kundenportal",
+  "responsibleEmployeeId": {{employee_id}},
+  "customerId": 1,
+  "customerContactName": "Anna Müller",
+  "comment": "Entwicklung eines Kundenportals",
+  "startDate": "2026-11-01",
+  "endDate": "2026-12-15"
+}
+
+### Unbekannten Mitarbeiter prüfen
+# @prompt bearer_token Access token aus GetBearerToken.http
+GET http://localhost:8089/employees/999999
+Authorization: Bearer {{bearer_token}}
+
+### Projekt mit unbekanntem Mitarbeiter anlegen
+# @prompt bearer_token Access token aus GetBearerToken.http
+POST http://localhost:8080/projects
+Authorization: Bearer {{bearer_token}}
+Content-Type: application/json
+
+{
+  "name": "Test unbekannter Mitarbeiter",
+  "responsibleEmployeeId": 999999,
+  "customerId": 1,
+  "customerContactName": "Anna Müller",
+  "comment": "Prüfung einer unbekannten Mitarbeiter-ID",
+  "startDate": "2026-11-01",
+  "endDate": "2026-12-15"
+}

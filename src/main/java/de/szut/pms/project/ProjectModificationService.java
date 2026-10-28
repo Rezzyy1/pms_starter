@@ -81,4 +81,13 @@ public class ProjectModificationService {
 
         repository.save(project);
     }
+
+    @Transactional
+    public void deleteById(Long id) {
+
+        ProjectEntity project = repository.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
+
+        repository.delete(project);
+    }
 }

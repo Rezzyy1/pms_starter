@@ -6,23 +6,30 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.szut.pms.customer.CustomerClient;
+import de.szut.pms.employee.EmployeeClient;
 
 @Service
 public class ProjectModificationService {
 
     private final ProjectRepository repository;
     private final CustomerClient customerClient;
+    private final EmployeeClient employeeClient;
 
     public ProjectModificationService(
             ProjectRepository repository,
-            CustomerClient customerClient) {
+            CustomerClient customerClient,
+            EmployeeClient employeeClient) {
 
         this.repository = repository;
         this.customerClient = customerClient;
+        this.employeeClient = employeeClient;
     }
 
     @Transactional
-    public void update(Long id, UpdateProjectDto dto) {
+    public void update(
+            Long id,
+            UpdateProjectDto dto,
+            String token) {
 
         ProjectEntity project = repository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
@@ -34,7 +41,26 @@ public class ProjectModificationService {
             );
         }
 
-        if (!project.getCustomerId().equals(dto.customerId())
+        boolean employeeIdChanged = !project.getResponsibleEmployeeId()
+                .equals(dto.responsibleEmployeeId());
+
+        if (employeeIdChanged
+                && !employeeClient.existsById(
+                        dto.responsibleEmployeeId(),
+                        token)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Mitarbeiter mit der ID "
+                            + dto.responsibleEmployeeId()
+                            + " existiert nicht."
+            );
+        }
+
+        boolean customerIdChanged = !project.getCustomerId()
+                .equals(dto.customerId());
+
+        if (customerIdChanged
                 && !customerClient.existsById(dto.customerId())) {
 
             throw new ResponseStatusException(

@@ -22,4 +22,11 @@ public class ProjectReadService {
                 .map(mapper::toDto)
                 .toList();
     }
+
+    @Transactional(readOnly = true)
+    public ProjectDto findById(Long id) {
+        ProjectEntity project = repository.findById(id)
+                .orElseThrow(() -> new ProjectNotFoundException(id));
+        return mapper.toDto(project);
+    }
 }

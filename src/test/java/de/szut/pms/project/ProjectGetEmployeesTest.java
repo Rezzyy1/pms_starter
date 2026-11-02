@@ -53,6 +53,43 @@ class ProjectGetEmployeesTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void getEmployeesReturnsAnEmptyListForAProjectWithoutEmployees() throws Exception {
+        ProjectEntity otherProject = project("Interne Verwaltung");
+        otherProject.addEmployee(21L, "Consulting");
+        projectRepository.save(otherProject);
+
+        ProjectEntity project = projectRepository.save(project("Kundenportal"));
+
+        mockMvc.perform(get("/projects/{id}/employees", project.getId()).with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.projectId").value(project.getId()))
+                .andExpect(jsonPath("$.projectName").value("Kundenportal"))
+                .andExpect(jsonPath("$.employees").isArray())
+                .andExpect(jsonPath("$.employees").isEmpty());
+
+        assertThat(projectRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void getEmployeesReturnsNotFoundForAnUnknownProject() throws Exception {
+        ProjectEntity project = project("Kundenportal");
+        project.addEmployee(11L, "Java");
+        project = projectRepository.save(project);
+        Long unknownProjectId = project.getId() + 1;
+
+        mockMvc.perform(get("/projects/{id}/employees", unknownProjectId).with(jwt()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.title").value("Projekt nicht gefunden"))
+                .andExpect(jsonPath("$.detail")
+                        .value("Projekt mit der ID " + unknownProjectId + " wurde nicht gefunden."));
+
+        assertThat(projectRepository.count()).isEqualTo(1);
+    }
+
+    @Test
     void getEmployeesWithoutAuthenticationIsRejected() throws Exception {
         ProjectEntity project = projectRepository.save(project("Kundenportal"));
 

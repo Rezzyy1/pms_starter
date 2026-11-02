@@ -1,11 +1,15 @@
 package de.szut.pms.project;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Column;
 
@@ -13,11 +17,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity 
+@Entity
 @Table(name = "projects")
-@Getter 
-@Setter 
-@NoArgsConstructor 
+@Getter
+@Setter
+@NoArgsConstructor
 public class ProjectEntity {
 
     @Id
@@ -45,6 +49,9 @@ public class ProjectEntity {
     @Column(nullable = false)
     private LocalDate endDate;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectEmployeeEntity> employees = new ArrayList<>();
+
     public ProjectEntity(
             String name,
             Long responsibleEmployeeId,
@@ -61,5 +68,9 @@ public class ProjectEntity {
         this.comment = comment;
         this.startDate = startDate;
         this.endDate = endDate;
+    }
+
+    public void addEmployee(Long employeeId, String qualification) {
+        employees.add(new ProjectEmployeeEntity(this, employeeId, qualification));
     }
 }

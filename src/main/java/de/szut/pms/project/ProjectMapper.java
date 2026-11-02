@@ -24,8 +24,12 @@ public class ProjectMapper {
             entity.getCustomerContactName(),
             entity.getComment(),
             entity.getStartDate(),
-            entity.getEndDate()
+            entity.getEndDate(),
+            entity.getEmployees().stream()
+                .map(employee -> new ProjectEmployeeDto(
+                    employee.getEmployeeId(), employee.getQualification()))
+                .toList()
         );
-    
+
     }
 }

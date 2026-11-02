@@ -108,3 +108,28 @@ Ausführliche Beispiel-Anfragen stehen in [GetBearerToken.http](GetBearerToken.h
   sobald sie existieren. Der Rest (JWT-Prüfung, CORS) steht bereits.
 * `config/OpenApiConfiguration` — hier passt ihr Titel/Beschreibung der Swagger-Dokumentation an.
 * `customer/CustomerClient` — Dummy, siehe oben.
+
+## Gemeinsames Modell für Projektmitarbeiter
+
+`ProjectEmployeeEntity` speichert in `project_employees` die Zuordnung eines Mitarbeiters zu
+einem Projekt: Projekt, Mitarbeiter-ID und die im Projekt eingesetzte Qualifikation.
+Die Kombination aus Projekt-ID und Mitarbeiter-ID ist eindeutig.
+
+`ProjectEntity.employees` enthält die Zuordnungen. Mit `addEmployee` werden beide Seiten der
+JPA-Beziehung gesetzt; beim Speichern des Projekts werden seine Zuordnungen mitgespeichert:
+
+```java
+project.addEmployee(employeeId, qualification);
+projectRepository.save(project);
+```
+
+Vor einer Zuweisung muss der spätere Team-Service die Mitarbeiter-ID, die Qualifikation und
+zeitliche Überschneidungen prüfen. `addEmployee` stellt die JPA-Beziehung her; die fachlichen
+Prüfungen gehören zur Story „Projektteam verwalten“.
+
+`GET /projects` und `GET /projects/{id}` geben die Zuordnungen als `employees` mit `employeeId`
+und `qualification` aus. Ohne Zuordnungen ist die Liste leer. `ProjectRepository` lädt die
+Zuordnungen über `@EntityGraph` zusammen mit den Projekten.
+
+Beim Löschen eines Projekts werden seine Zuordnungen durch JPA mitgelöscht. Ein aus
+`employees` entfernter Eintrag wird durch `orphanRemoval` ebenfalls gelöscht.

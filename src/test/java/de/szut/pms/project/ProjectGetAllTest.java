@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 
 import de.szut.pms.testcontainers.AbstractIntegrationTest;
 
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -58,6 +59,31 @@ class ProjectGetAllTest extends AbstractIntegrationTest {
                         first.getId().intValue(), second.getId().intValue())))
                 .andExpect(jsonPath("$[*].name").value(containsInAnyOrder(
                         "Kundenportal", "Interne Verwaltung")));
+    }
+
+    @Test
+    void getAllReturnsEmployeesOfEachProject() throws Exception {
+        ProjectEntity first = project("Kundenportal");
+        first.addEmployee(11L, "Java");
+        first.addEmployee(12L, "SQL");
+        first = projectRepository.save(first);
+
+        ProjectEntity second = project("Interne Verwaltung");
+        second.addEmployee(21L, "Consulting");
+        second = projectRepository.save(second);
+
+        String firstEmployees = "$[?(@.id == " + first.getId() + ")].employees";
+        String secondEmployees = "$[?(@.id == " + second.getId() + ")].employees";
+
+        mockMvc.perform(get("/projects").with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath(firstEmployees + "[*].employeeId")
+                        .value(containsInAnyOrder(11, 12)))
+                .andExpect(jsonPath(firstEmployees + "[*].qualification")
+                        .value(containsInAnyOrder("Java", "SQL")))
+                .andExpect(jsonPath(secondEmployees + "[*].employeeId").value(contains(21)))
+                .andExpect(jsonPath(secondEmployees + "[*].qualification").value(contains("Consulting")));
     }
 
     @Test

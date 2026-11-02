@@ -10,7 +10,10 @@ import org.springframework.http.MediaType;
 import de.szut.pms.testcontainers.AbstractIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -46,6 +49,45 @@ class ProjectGetByIdTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.employees").isEmpty());
 
         assertThat(projectRepository.count()).isEqualTo(2);
+    }
+
+    @Test
+    void getByIdReturnsOnlyOwnEmployeesWithTheirQualifications() throws Exception {
+        ProjectEntity project = project("Kundenportal");
+        project.addEmployee(11L, "Java");
+        project.addEmployee(12L, "SQL");
+        project = projectRepository.save(project);
+
+        ProjectEntity otherProject = project("Interne Verwaltung");
+        otherProject.addEmployee(21L, "Consulting");
+        projectRepository.save(otherProject);
+
+        mockMvc.perform(get("/projects/{id}", project.getId()).with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(project.getId()))
+                .andExpect(jsonPath("$.employees.length()").value(2))
+                .andExpect(jsonPath("$.employees[*].employeeId").value(containsInAnyOrder(11, 12)))
+                .andExpect(jsonPath("$.employees[?(@.employeeId == 11)].qualification").value(contains("Java")))
+                .andExpect(jsonPath("$.employees[?(@.employeeId == 12)].qualification").value(contains("SQL")));
+    }
+
+    @Test
+    void getByIdAfterDeletingProjectWithEmployeesIsNotFound() throws Exception {
+        ProjectEntity project = project("Kundenportal");
+        project.addEmployee(11L, "Java");
+        project = projectRepository.save(project);
+
+        mockMvc.perform(get("/projects/{id}", project.getId()).with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.employees.length()").value(1));
+
+        mockMvc.perform(delete("/projects/{id}", project.getId()).with(jwt()))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/projects/{id}", project.getId()).with(jwt()))
+                .andExpect(status().isNotFound());
+
+        assertThat(projectRepository.count()).isZero();
     }
 
     @Test

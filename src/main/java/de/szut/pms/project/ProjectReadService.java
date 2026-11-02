@@ -1,0 +1,25 @@
+package de.szut.pms.project;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class ProjectReadService {
+
+    private final ProjectRepository repository;
+    private final ProjectMapper mapper;
+
+    public ProjectReadService(ProjectRepository repository, ProjectMapper mapper) {
+        this.repository = repository;
+        this.mapper = mapper;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectDto> findAll() {
+        return repository.findAll().stream()
+                .map(mapper::toDto)
+                .toList();
+    }
+}

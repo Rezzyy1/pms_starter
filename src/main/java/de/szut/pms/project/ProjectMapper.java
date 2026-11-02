@@ -1,5 +1,7 @@
 package de.szut.pms.project;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,7 +26,8 @@ public class ProjectMapper {
             entity.getCustomerContactName(),
             entity.getComment(),
             entity.getStartDate(),
-            entity.getEndDate()
+            entity.getEndDate(),
+            List.of()
         );
     
     }

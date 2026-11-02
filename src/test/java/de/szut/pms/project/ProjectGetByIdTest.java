@@ -41,7 +41,9 @@ class ProjectGetByIdTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.customerContactName").value("Anna Müller"))
                 .andExpect(jsonPath("$.comment").value("Entwicklung eines Kundenportals"))
                 .andExpect(jsonPath("$.startDate").value("2026-11-01"))
-                .andExpect(jsonPath("$.endDate").value("2026-12-15"));
+                .andExpect(jsonPath("$.endDate").value("2026-12-15"))
+                .andExpect(jsonPath("$.employees").isArray())
+                .andExpect(jsonPath("$.employees").isEmpty());
 
         assertThat(projectRepository.count()).isEqualTo(2);
     }

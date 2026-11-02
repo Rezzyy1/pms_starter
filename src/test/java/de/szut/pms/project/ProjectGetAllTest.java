@@ -41,7 +41,9 @@ class ProjectGetAllTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$[0].customerContactName").value("Anna Müller"))
                 .andExpect(jsonPath("$[0].comment").value("Entwicklung eines Kundenportals"))
                 .andExpect(jsonPath("$[0].startDate").value("2026-11-01"))
-                .andExpect(jsonPath("$[0].endDate").value("2026-12-15"));
+                .andExpect(jsonPath("$[0].endDate").value("2026-12-15"))
+                .andExpect(jsonPath("$[0].employees").isArray())
+                .andExpect(jsonPath("$[0].employees").isEmpty());
     }
 
     @Test

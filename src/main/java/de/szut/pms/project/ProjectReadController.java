@@ -25,7 +25,8 @@ public class ProjectReadController {
     }
 
     @Operation(summary = "Ruft alle Projekte ab")
-    @ApiResponse(responseCode = "200", description = "Projektliste wurde abgerufen")
+    @ApiResponse(responseCode = "200",
+            description = "Projektliste wurde abgerufen; ohne gespeicherte Projekte wird [] zurückgegeben")
     @ApiResponse(responseCode = "401", description = "Authentifizierung ist erforderlich")
     @GetMapping
     public ResponseEntity<List<ProjectDto>> findAll() {

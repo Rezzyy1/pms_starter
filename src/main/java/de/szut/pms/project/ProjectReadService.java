@@ -29,4 +29,10 @@ public class ProjectReadService {
                 .orElseThrow(() -> new ProjectNotFoundException(id));
         return mapper.toDto(project);
     }
+
+    @Transactional(readOnly = true)
+    public ProjectEmployeesDto findEmployeesByProjectId(Long projectId) {
+        ProjectDto project = findById(projectId);
+        return new ProjectEmployeesDto(project.id(), project.name(), project.employees());
+    }
 }

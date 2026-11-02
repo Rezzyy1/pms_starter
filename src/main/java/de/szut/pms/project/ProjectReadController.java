@@ -46,4 +46,20 @@ public class ProjectReadController {
     public ResponseEntity<ProjectDto> findById(@PathVariable("id") Long id) {
         return ResponseEntity.ok(service.findById(id));
     }
+
+    @Operation(summary = "Ruft die Mitarbeiter eines Projekts ab")
+    @ApiResponse(responseCode = "200",
+            description = "Projekt-ID, Projektbezeichnung und Mitarbeiter; die Mitarbeiterliste kann leer sein")
+    @ApiResponse(responseCode = "400", description = "Ungültige Projekt-ID",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "401", description = "Authentifizierung ist erforderlich",
+            content = @Content)
+    @ApiResponse(responseCode = "404", description = "Projekt wurde nicht gefunden",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)))
+    @GetMapping("/{id}/employees")
+    public ResponseEntity<ProjectEmployeesDto> findEmployees(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(service.findEmployeesByProjectId(id));
+    }
 }

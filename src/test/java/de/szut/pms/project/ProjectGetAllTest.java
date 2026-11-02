@@ -59,6 +59,15 @@ class ProjectGetAllTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void getAllReturnsEmptyListWhenNoProjectsExist() throws Exception {
+        mockMvc.perform(get("/projects").with(jwt()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
     void getAllWithoutAuthenticationIsRejected() throws Exception {
         mockMvc.perform(get("/projects"))
                 .andExpect(status().isUnauthorized());

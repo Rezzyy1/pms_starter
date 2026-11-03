@@ -1,0 +1,19 @@
+# Zuerst GetBearerToken.http ausführen und access_token beim Prompt einsetzen.
+# Für die Einzelabfragen eine vorhandene Projekt-ID eintragen.
+@base_url=http://localhost:8080
+@project_id=1
+
+### Alle Projekte abrufen
+# @prompt bearer_token Access token aus GetBearerToken.http
+GET {{base_url}}/projects
+Authorization: Bearer {{bearer_token}}
+
+### Ein Projekt abrufen
+# @prompt bearer_token Access token aus GetBearerToken.http
+GET {{base_url}}/projects/{{project_id}}
+Authorization: Bearer {{bearer_token}}
+
+### Mitarbeiter eines Projekts abrufen
+# @prompt bearer_token Access token aus GetBearerToken.http
+GET {{base_url}}/projects/{{project_id}}/employees
+Authorization: Bearer {{bearer_token}}

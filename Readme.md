@@ -99,6 +99,17 @@ Einfach den Request darin ausführen und `access_token` aus der Antwort kopieren
 Ausführliche Beispiel-Anfragen stehen in [GetBearerToken.http](GetBearerToken.http) und
 [SampleRequests.http](SampleRequests.http).
 
+### Projekte mit einem gültigen JWT abrufen
+
+[GetProjects.http](GetProjects.http) enthält Anfragen für alle Projekte, ein einzelnes Projekt
+und dessen Mitarbeiter. Zuerst in `GetBearerToken.http` einen Token holen und den Wert von
+`access_token` beim jeweiligen Prompt einsetzen. Die Anfrage sendet ihn als
+`Authorization: Bearer <access_token>` an den PMS.
+
+`GET /projects` antwortet bei gültigem JWT mit `200 OK`, auch wenn die Projektliste leer ist.
+Für die beiden Einzelabfragen muss `project_id` auf eine vorhandene Projekt-ID gesetzt werden.
+Ein unbekanntes Projekt liefert trotz gültigem JWT `404 Not Found`.
+
 # Wo ihr weiterarbeitet
 
 * `hello` — Beispiel-Ressource, die das Muster zeigt (Entity → Record-DTOs → Mapper →

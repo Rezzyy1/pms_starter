@@ -110,6 +110,13 @@ und dessen Mitarbeiter. Zuerst in `GetBearerToken.http` einen Token holen und de
 Für die beiden Einzelabfragen muss `project_id` auf eine vorhandene Projekt-ID gesetzt werden.
 Ein unbekanntes Projekt liefert trotz gültigem JWT `404 Not Found`.
 
+### Berechtigungen
+
+Alle authentifizierten Benutzer haben im PMS dieselben Zugriffsrechte. Jeder Benutzer mit
+einem gültigen JWT darf Projekte abrufen, anlegen, ändern und löschen sowie Projektmitarbeiter
+einsehen. Rollen und Scopes im JWT schränken diese Zugriffsrechte in dieser Version nicht ein.
+Die Sicherheitskonfiguration verwendet dafür `authenticated()`.
+
 # Wo ihr weiterarbeitet
 
 * `hello` — Beispiel-Ressource, die das Muster zeigt (Entity → Record-DTOs → Mapper →

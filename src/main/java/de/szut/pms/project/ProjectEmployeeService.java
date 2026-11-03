@@ -79,4 +79,21 @@ public class ProjectEmployeeService {
 
         return removed;
     }
+
+    @Transactional(readOnly = true)
+    public EmployeeProjectsDto findProjectsByEmployeeId(Long employeeId, String token) {
+        if (employeeId == null || employeeId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Die Mitarbeiter-ID muss eine positive Zahl sein.");
+        }
+
+        if (!employeeClient.existsById(employeeId, token)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Mitarbeiter mit der ID " + employeeId + " wurde nicht gefunden.");
+        }
+
+        return new EmployeeProjectsDto(employeeId, repository.findProjectsByEmployeeId(employeeId));
+    }
 }

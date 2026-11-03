@@ -34,4 +34,14 @@ public interface ProjectRepository
             @Param("excludedProjectId") Long excludedProjectId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    @Query("""
+            select new de.szut.pms.project.EmployeeProjectDto(
+                project.id, project.name, project.startDate, project.endDate, employee.qualification)
+            from ProjectEntity project
+            join project.employees employee
+            where employee.employeeId = :employeeId
+            order by project.startDate, project.id
+            """)
+    List<EmployeeProjectDto> findProjectsByEmployeeId(@Param("employeeId") Long employeeId);
 }

@@ -33,6 +33,10 @@ public class ProjectModificationController {
             responseCode = "204",
             description = "Projekt wurde aktualisiert"
     )
+    @ApiResponse(
+            responseCode = "409",
+            description = "Neue Projektdaten überschneiden sich mit einem anderen Projekt eines Mitarbeiters"
+    )
     @PutMapping("/{id}")
     public ResponseEntity<Void> update(
             @PathVariable("id") Long id,

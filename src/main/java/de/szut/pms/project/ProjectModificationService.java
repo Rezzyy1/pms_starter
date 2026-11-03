@@ -71,6 +71,23 @@ public class ProjectModificationService {
             );
         }
 
+        boolean datesChanged = !project.getStartDate().equals(dto.startDate())
+                || !project.getEndDate().equals(dto.endDate());
+
+        if (datesChanged) {
+            for (ProjectEmployeeEntity employee : project.getEmployees()) {
+                if (repository.existsOverlappingProjectForEmployee(
+                        employee.getEmployeeId(), id, dto.startDate(), dto.endDate())) {
+                    throw new ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Mitarbeiter mit der ID " + employee.getEmployeeId()
+                                    + " ist im Zeitraum vom " + dto.startDate()
+                                    + " bis " + dto.endDate()
+                                    + " bereits einem anderen Projekt zugeordnet.");
+                }
+            }
+        }
+
         project.setName(dto.name());
         project.setResponsibleEmployeeId(dto.responsibleEmployeeId());
         project.setCustomerId(dto.customerId());

@@ -12,11 +12,13 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 
 import tools.jackson.databind.ObjectMapper;
@@ -25,12 +27,14 @@ import de.szut.pms.employee.EmployeeClient;
 import de.szut.pms.testcontainers.AbstractIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.startsWith;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,6 +70,43 @@ class ProjectEmployeeAssignmentInvalidTest extends AbstractIntegrationTest {
                 LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31));
         otherProject.addEmployee(11L, "Consulting");
         otherProjectId = projectRepository.save(otherProject).getId();
+    }
+
+    @Test
+    void assignmentToUnknownProjectReturns404() throws Exception {
+        Long unknownProjectId = Math.max(projectId, otherProjectId) + 1;
+
+        ResultActions response = postRejectedAssignment(
+                post("/projects/{projectId}/employees", unknownProjectId).with(jwt()), validAssignment());
+
+        expectProblem(response, 404,
+                "Projekt mit der ID " + unknownProjectId + " wurde nicht gefunden.")
+                .andExpect(jsonPath("$.title").value("Projekt nicht gefunden"));
+
+        verifyNoInteractions(employeeClient);
+    }
+
+    @Test
+    void assignmentOfAnAlreadyAssignedEmployeeReturns409() throws Exception {
+        Map<String, Object> request = validAssignment();
+        request.put("employeeId", 12L);
+
+        expectProblem(postRejectedAssignment(request), 409,
+                "Mitarbeiter mit der ID 12 ist diesem Projekt bereits zugeordnet.");
+
+        verifyNoInteractions(employeeClient);
+    }
+
+    @Test
+    void assignmentWithoutAuthenticationReturns401() throws Exception {
+        ResultActions response = postRejectedAssignment(
+                post("/projects/{projectId}/employees", projectId), validAssignment());
+
+        expectProblem(response, 401, "Ein Bearer-Token ist erforderlich.")
+                .andExpect(jsonPath("$.title").value("Authentifizierung fehlgeschlagen"))
+                .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, startsWith("Bearer")));
+
+        verifyNoInteractions(employeeClient);
     }
 
     @Test
@@ -198,13 +239,18 @@ class ProjectEmployeeAssignmentInvalidTest extends AbstractIntegrationTest {
     }
 
     private ResultActions postRejectedAssignment(Map<String, Object> request) throws Exception {
+        return postRejectedAssignment(post("/projects/{projectId}/employees", projectId)
+                .with(jwt().jwt(builder -> builder.tokenValue("test-token"))), request);
+    }
+
+    private ResultActions postRejectedAssignment(
+            MockHttpServletRequestBuilder httpRequest, Map<String, Object> request) throws Exception {
         List<Map<String, Object>> projectsBefore = jdbcTemplate.queryForList(
                 "SELECT * FROM projects ORDER BY id");
         List<Map<String, Object>> assignmentsBefore = jdbcTemplate.queryForList(
                 "SELECT * FROM project_employees ORDER BY id");
 
-        ResultActions response = mockMvc.perform(post("/projects/{projectId}/employees", projectId)
-                        .with(jwt().jwt(builder -> builder.tokenValue("test-token")))
+        ResultActions response = mockMvc.perform(httpRequest
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is4xxClientError());
@@ -219,13 +265,14 @@ class ProjectEmployeeAssignmentInvalidTest extends AbstractIntegrationTest {
 
     private ResultActions expectProblem(ResultActions response, int expectedStatus, String detail)
             throws Exception {
+        String requestUri = response.andReturn().getRequest().getRequestURI();
         return response
                 .andExpect(status().is(expectedStatus))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.status").value(expectedStatus))
                 .andExpect(jsonPath("$.title").isNotEmpty())
                 .andExpect(jsonPath("$.detail").value(detail))
-                .andExpect(jsonPath("$.instance").value("/projects/" + projectId + "/employees"));
+                .andExpect(jsonPath("$.instance").value(requestUri));
     }
 
     private void expectValidationError(Map<String, Object> request, String field) throws Exception {

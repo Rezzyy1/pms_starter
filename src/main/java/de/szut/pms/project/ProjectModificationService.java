@@ -14,15 +14,18 @@ public class ProjectModificationService {
     private final ProjectRepository repository;
     private final CustomerClient customerClient;
     private final EmployeeClient employeeClient;
+    private final ProjectAssignmentLock assignmentLock;
 
     public ProjectModificationService(
             ProjectRepository repository,
             CustomerClient customerClient,
-            EmployeeClient employeeClient) {
+            EmployeeClient employeeClient,
+            ProjectAssignmentLock assignmentLock) {
 
         this.repository = repository;
         this.customerClient = customerClient;
         this.employeeClient = employeeClient;
+        this.assignmentLock = assignmentLock;
     }
 
     @Transactional
@@ -31,6 +34,7 @@ public class ProjectModificationService {
             UpdateProjectDto dto,
             String token) {
 
+        assignmentLock.lock();
         ProjectEntity project = repository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 
@@ -102,6 +106,7 @@ public class ProjectModificationService {
     @Transactional
     public void deleteById(Long id) {
 
+        assignmentLock.lock();
         ProjectEntity project = repository.findById(id)
                 .orElseThrow(() -> new ProjectNotFoundException(id));
 

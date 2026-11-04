@@ -232,6 +232,10 @@ Für einzelne Endpunkte gelten folgende Besonderheiten:
   Mitarbeiterzuordnung führt zu **404**.
 - Start- und Enddatum zählen bei der Prüfung auf Überschneidungen mit. Auch wenn ein Projekt
   am Enddatum eines anderen Projekts desselben Mitarbeiters beginnt, entsteht **409**.
+- Änderungen an Projektzuordnungen und Projektzeiträumen werden durch eine PostgreSQL-Sperre
+  bis zum Ende der Transaktion geschützt. Dadurch wird auch bei gleichzeitigen Anfragen
+  mit aktuellen Daten geprüft. Zur einfachen Umsetzung werden diese Änderungen für alle
+  Mitarbeiter nacheinander ausgeführt; normale Lesezugriffe bleiben parallel möglich.
 - Bei `GET /projects` bezieht sich **400** auf eine ungültige Bearer-Authentifizierungsanfrage.
   Die übrigen Endpunkte können diesen Authentifizierungsfehler ebenfalls zurückgeben.
 

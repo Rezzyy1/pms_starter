@@ -12,16 +12,22 @@ public class ProjectEmployeeService {
 
     private final ProjectRepository repository;
     private final EmployeeClient employeeClient;
+    private final ProjectAssignmentLock assignmentLock;
 
-    public ProjectEmployeeService(ProjectRepository repository, EmployeeClient employeeClient) {
+    public ProjectEmployeeService(
+            ProjectRepository repository,
+            EmployeeClient employeeClient,
+            ProjectAssignmentLock assignmentLock) {
         this.repository = repository;
         this.employeeClient = employeeClient;
+        this.assignmentLock = assignmentLock;
     }
 
     @Transactional
     public ProjectEmployeeDto addEmployee(
             Long projectId, AddProjectEmployeeDto dto, String token) {
 
+        assignmentLock.lock();
         ProjectEntity project = repository.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
@@ -60,6 +66,7 @@ public class ProjectEmployeeService {
 
     @Transactional
     public ProjectEmployeeDto removeEmployee(Long projectId, Long employeeId) {
+        assignmentLock.lock();
         ProjectEntity project = repository.findById(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 

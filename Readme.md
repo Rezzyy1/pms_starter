@@ -68,6 +68,14 @@ http://localhost:8089/swagger
 Ruft ihn über `employee-service.base-url` aus `application.properties` auf (`http://localhost:8089`),
 nicht über eine feste Adresse im Code — dann bleibt die Adresse an einer Stelle änderbar.
 
+### Token Relay
+
+Beim Anlegen eines Projekts und beim Ändern des verantwortlichen Mitarbeiters prüft der PMS
+die Mitarbeiter-ID über den Employee-Service. Der Controller übernimmt dafür den JWT des
+authentifizierten Benutzers mit `jwt.getTokenValue()`. Der Service gibt diesen Token an
+`EmployeeClient` weiter, der ihn unverändert als `Authorization: Bearer <JWT>` mitsendet.
+Jeder Aufruf verwendet den Token seiner eigenen Anfrage.
+
 # Kunden-Service
 
 Der Kunden-Service existiert noch nicht — er wird parallel von einem anderen Team gebaut. Das

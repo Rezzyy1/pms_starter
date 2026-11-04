@@ -35,6 +35,9 @@ public class EmployeeClient {
                 .build();
     }
 
+    /**
+     * Prüft die Mitarbeiter-ID und leitet den JWT des Aufrufers als Bearer-Token weiter.
+     */
     public boolean existsById(Long employeeId, String token) {
 
         try {

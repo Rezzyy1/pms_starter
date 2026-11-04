@@ -241,13 +241,16 @@ Für einzelne Endpunkte gelten folgende Besonderheiten:
 
 ### Fehlerantworten
 
-Fehler enthalten `type`, `title`, `status`, `detail` und `instance`.
+Fehler werden als `application/problem+json` ausgegeben und enthalten `title`, `status`,
+`detail` und `instance`. Das Feld `type` ist optional: Fehlt es, gilt gemäß
+[RFC 9457](https://www.rfc-editor.org/rfc/rfc9457.html#name-type) der Wert `about:blank`.
+Dieser Standardwert wird bei der aktuellen Serialisierung nicht ausgegeben.
 Bei der Validierung von Request-Feldern kommt zusätzlich eine `errors`-Map
-mit Feldnamen und Meldungen hinzu, zum Beispiel:
+mit Feldnamen und Meldungen hinzu. Sie steht direkt neben den übrigen Feldern
+auf der obersten JSON-Ebene und ist bei anderen Fehlern nicht erforderlich, zum Beispiel:
 
 ```json
 {
-  "type": "about:blank",
   "title": "Ungültige Eingabe",
   "status": 400,
   "detail": "Die Anfrage enthält ungültige Felder.",

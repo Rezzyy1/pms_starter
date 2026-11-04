@@ -13,7 +13,9 @@ import de.szut.pms.testcontainers.AbstractIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -93,6 +95,65 @@ class OpenApiDocumentationTest extends AbstractIntegrationTest {
         assertRequestBody(paths.path("/projects/{id}").path("put"), "UpdateProjectDto");
         assertRequestBody(paths.path("/projects/{projectId}/employees").path("post"),
                 "AddProjectEmployeeDto");
+    }
+
+    @Test
+    void errorSchemaDescribesTheActualValidationResponse() throws Exception {
+        String response = mockMvc.perform(post("/projects").with(jwt())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "",
+                                  "responsibleEmployeeId": 1,
+                                  "customerId": 2,
+                                  "customerContactName": "Anna Müller",
+                                  "comment": "Projektziel",
+                                  "startDate": "2026-11-01",
+                                  "endDate": "2026-12-15"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.errors.name").value("Die Projektbezeichnung ist erforderlich."))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode problem = objectMapper.readTree(response);
+        JsonNode schema = openApiDocument().at("/components/schemas/ProblemDetail");
+        assertDocumentedProblemFields(schema, problem);
+        assertThat(schema.at("/properties/errors/type").asText()).isEqualTo("object");
+        assertThat(schema.at("/properties/errors/additionalProperties/type").asText()).isEqualTo("string");
+        assertThat(schema.path("properties").has("properties")).isFalse();
+        assertThat(problem.has("properties")).isFalse();
+    }
+
+    @Test
+    void errorSchemaAllowsAuthenticationErrorsWithoutTypeAndFieldErrors() throws Exception {
+        String response = mockMvc.perform(get("/projects"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode problem = objectMapper.readTree(response);
+        JsonNode schema = openApiDocument().at("/components/schemas/ProblemDetail");
+        assertDocumentedProblemFields(schema, problem);
+        assertThat(problem.has("type")).isFalse();
+        assertThat(problem.has("errors")).isFalse();
+        assertThat(schema.path("properties").has("type")).isTrue();
+        assertThat(schema.path("properties").has("errors")).isTrue();
+        for (JsonNode required : schema.path("required")) {
+            assertThat(required.asText()).isNotIn("type", "errors");
+        }
+    }
+
+    private void assertDocumentedProblemFields(JsonNode schema, JsonNode problem) {
+        for (String field : problem.propertyNames()) {
+            assertThat(schema.path("properties").has(field))
+                    .as("Dokumentiertes Antwortfeld: %s", field).isTrue();
+        }
+        for (JsonNode required : schema.path("required")) {
+            assertThat(problem.has(required.asText()))
+                    .as("Pflichtfeld in der Antwort: %s", required.asText()).isTrue();
+        }
     }
 
     private JsonNode openApiDocument() throws Exception {

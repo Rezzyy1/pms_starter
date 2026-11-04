@@ -1,14 +1,20 @@
 package de.szut.pms.config;
 
+import java.util.List;
+
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.MapSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import jakarta.servlet.ServletContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 
 @Configuration
 public class OpenApiConfiguration {
@@ -71,5 +77,27 @@ public class OpenApiConfiguration {
                                                         + "Bei 401 einen neuen Access-Token beziehen und hier ersetzen.")
                                 )
                 );
+    }
+
+    @Bean
+    public OpenApiCustomizer problemDetailSchemaCustomizer() {
+        return openApi -> {
+            Schema<?> problem = openApi.getComponents().getSchemas().get("ProblemDetail");
+            if (problem == null) {
+                return;
+            }
+
+            // Passt nur die Dokumentation an die vorhandenen JSON-Fehlerantworten an.
+            problem.setDescription("Fehlerantwort mit optionalen Zusatzfeldern auf oberster JSON-Ebene.");
+            problem.setRequired(List.of("title", "status", "detail", "instance"));
+            problem.getProperties().remove("properties");
+            problem.addProperties("errors", new MapSchema()
+                    .description("Optionale Feldfehler bei der Request-Validierung: Feldname und Fehlermeldung. "
+                            + "Steht direkt neben title, status, detail und instance.")
+                    .additionalProperties(new StringSchema()));
+            problem.getProperties().get("type").setDescription(
+                    "Optionaler Problemtyp. Ohne dieses Feld gilt about:blank. "
+                            + "Der Standardwert wird in den aktuellen Antworten nicht ausgegeben.");
+        };
     }
 }
